@@ -70,7 +70,18 @@ export async function POST(request: NextRequest) {
     // Input 0: Background color source
     args.push("-f", "lavfi", "-i", `color=c=${canvas.backgroundColor.replace('#', '0x')}:s=${targetRes.w}x${targetRes.h}:d=${duration}:r=${targetFps}`);
 
-    const mediaLayers = layers.filter((l: any) => l.serverPath && l.isVisible);
+    const mediaLayers = layers.map((l: any) => {
+      const layer = { ...l };
+      if (!layer.serverPath && layer.url) {
+        if (layer.url.startsWith('/ai-video-')) {
+          layer.serverPath = path.join(process.cwd(), "public", layer.url);
+        } else if (layer.url.startsWith('/api/assets/')) {
+          const filename = layer.url.split('/').pop();
+          layer.serverPath = path.join(process.cwd(), "temp", "uploads", filename);
+        }
+      }
+      return layer;
+    }).filter((l: any) => l.serverPath && l.isVisible);
     
     // Check which media layers have audio
     for (const layer of mediaLayers) {

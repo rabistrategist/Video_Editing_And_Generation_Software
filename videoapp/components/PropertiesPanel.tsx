@@ -152,7 +152,7 @@ export default function PropertiesPanel({ width = 300 }: { width?: number }) {
                   <input
                     type="number"
                     step="0.1"
-                    value={selectedLayer.startAt.toFixed(1)}
+                    value={(selectedLayer.startAt || 0).toFixed(1)}
                     onChange={e => updateLayer(selectedLayer.id, { startAt: parseFloat(e.target.value) || 0 })}
                     style={{ width: '100%', padding: '10px', backgroundColor: INPUT_BG, border: '1px solid rgba(255,255,255,0.05)', borderRadius: '6px', color: 'white', fontSize: '13px' }}
                   />
@@ -162,7 +162,7 @@ export default function PropertiesPanel({ width = 300 }: { width?: number }) {
                   <input
                     type="number"
                     step="0.1"
-                    value={selectedLayer.duration.toFixed(1)}
+                    value={(selectedLayer.duration || 0).toFixed(1)}
                     onChange={e => updateLayer(selectedLayer.id, { duration: parseFloat(e.target.value) || 1 })}
                     style={{ width: '100%', padding: '10px', backgroundColor: INPUT_BG, border: '1px solid rgba(255,255,255,0.05)', borderRadius: '6px', color: 'white', fontSize: '13px' }}
                   />
@@ -174,7 +174,7 @@ export default function PropertiesPanel({ width = 300 }: { width?: number }) {
                   <span style={{ fontSize: '13px', color: TEXT_MUTED }}>X</span>
                   <input
                     type="number"
-                    value={selectedLayer.transform.x.toFixed(1)}
+                    value={(selectedLayer.transform?.x || 0).toFixed(1)}
                     onChange={e => updateLayer(selectedLayer.id, { transform: { ...selectedLayer.transform, x: parseFloat(e.target.value) || 0 } })}
                     style={{ width: '100%', padding: '8px', backgroundColor: INPUT_BG, border: '1px solid rgba(255,255,255,0.05)', borderRadius: '6px', color: 'white', fontSize: '13px' }}
                   />
@@ -183,7 +183,7 @@ export default function PropertiesPanel({ width = 300 }: { width?: number }) {
                   <span style={{ fontSize: '13px', color: TEXT_MUTED }}>Y</span>
                   <input
                     type="number"
-                    value={selectedLayer.transform.y.toFixed(1)}
+                    value={(selectedLayer.transform?.y || 0).toFixed(1)}
                     onChange={e => updateLayer(selectedLayer.id, { transform: { ...selectedLayer.transform, y: parseFloat(e.target.value) || 0 } })}
                     style={{ width: '100%', padding: '8px', backgroundColor: INPUT_BG, border: '1px solid rgba(255,255,255,0.05)', borderRadius: '6px', color: 'white', fontSize: '13px' }}
                   />
@@ -195,7 +195,7 @@ export default function PropertiesPanel({ width = 300 }: { width?: number }) {
                   <span style={{ fontSize: '11px', color: TEXT_MUTED }}>W</span>
                   <input
                     type="number"
-                    value={selectedLayer.transform.width.toFixed(1)}
+                    value={(selectedLayer.transform?.width || 0).toFixed(1)}
                     onChange={e => updateLayer(selectedLayer.id, { transform: { ...selectedLayer.transform, width: parseFloat(e.target.value) || 10 } })}
                     style={{ width: '100%', padding: '8px', backgroundColor: INPUT_BG, border: '1px solid rgba(255,255,255,0.05)', borderRadius: '6px', color: 'white', fontSize: '13px' }}
                   />
@@ -204,7 +204,7 @@ export default function PropertiesPanel({ width = 300 }: { width?: number }) {
                   <span style={{ fontSize: '11px', color: TEXT_MUTED }}>H</span>
                   <input
                     type="number"
-                    value={selectedLayer.transform.height.toFixed(1)}
+                    value={(selectedLayer.transform?.height || 0).toFixed(1)}
                     onChange={e => updateLayer(selectedLayer.id, { transform: { ...selectedLayer.transform, height: parseFloat(e.target.value) || 10 } })}
                     style={{ width: '100%', padding: '8px', backgroundColor: INPUT_BG, border: '1px solid rgba(255,255,255,0.05)', borderRadius: '6px', color: 'white', fontSize: '13px' }}
                   />

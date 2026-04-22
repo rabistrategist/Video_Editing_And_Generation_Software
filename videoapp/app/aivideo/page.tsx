@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sparkles, Clapperboard } from 'lucide-react';
 import Navbar from '@/components/Navbar';
+import { useStore } from '@/store/useStore';
 import { generateVideo } from './actions';
 
 // Icons as SVG components to avoid external dependency issues
@@ -120,7 +121,8 @@ export default function FireflyUI() {
 
   const [promptText, setPromptText] = useState("a cat walking on the moon");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [videoSrc, setVideoSrc] = useState<string | null>(null);
+  const aiVideoSrc = useStore(state => state.aiVideoSrc);
+  const setAiVideoSrc = useStore(state => state.setAiVideoSrc);
 
   const [activeTab, setActiveTab] = useState('Generate');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -131,7 +133,7 @@ export default function FireflyUI() {
     try {
       const result = await generateVideo(promptText);
       if (result.success && result.url) {
-        setVideoSrc(result.url);
+        setAiVideoSrc(result.url);
       } else {
         alert(result.error || "Failed to generate video. Make sure ngrok is running and try again.");
       }
@@ -154,9 +156,9 @@ export default function FireflyUI() {
         showPreview={false}
         primaryActionText="Download"
         onPrimaryAction={() => {
-          if (videoSrc) {
+          if (aiVideoSrc) {
             const link = document.createElement('a');
-            link.href = videoSrc;
+            link.href = aiVideoSrc;
             link.download = 'generated_video.mp4';
             link.click();
           } else {
@@ -173,7 +175,8 @@ export default function FireflyUI() {
               key={id}
               onClick={() => {
                 if (id === 'Edit Clip') {
-                  router.push('/');
+                  const url = aiVideoSrc ? `/?videoUrl=${encodeURIComponent(aiVideoSrc)}` : '/';
+                  router.push(url);
                 } else {
                   setActiveTab(id);
                 }
@@ -312,17 +315,17 @@ export default function FireflyUI() {
         </aside>
 
         {/* Central Display */}
-        <main className="flex-1 bg-[var(--bg-dark)] p-8 flex flex-col items-center justify-center relative overflow-hidden">
+        <main className="flex-1 bg-[var(--bg-dark)] flex flex-col items-center justify-start pt-6 relative overflow-hidden">
           <div className="w-full max-w-4xl relative group">
-            <div className="aspect-video rounded-3xl overflow-hidden mb-8 shadow-2xl relative bg-black border border-[var(--border)]">
+            <div className="aspect-video rounded-3xl overflow-hidden shadow-2xl relative bg-black border border-[var(--border)]">
               {(isGenerating || isProcessing) ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[var(--bg-dark)] z-10">
                   <div className="w-16 h-16 border-4 border-[var(--accent)]/30 border-t-[var(--accent)] rounded-full animate-spin"></div>
-                  <span className="text-sm font-medium animate-pulse text-white">{isGenerating ? "Generating video on Colab GPU..." : "Processing video with FFmpeg..."}</span>
+                  <span className="text-sm font-medium animate-pulse text-white">{isGenerating ? "Generating Video Using Colab GPU..." : "Processing video with FFmpeg..."}</span>
                 </div>
-              ) : videoSrc ? (
+              ) : aiVideoSrc ? (
                 <video
-                  src={videoSrc}
+                  src={aiVideoSrc}
                   className="w-full h-full object-contain"
                   autoPlay
                   loop

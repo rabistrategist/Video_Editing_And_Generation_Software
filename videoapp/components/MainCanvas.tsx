@@ -654,6 +654,23 @@ export default function MainCanvas() {
       if (!dataStr) return;
       let data = JSON.parse(dataStr);
 
+      if (data.type === 'applyTransition') {
+        const transData = data.payload;
+        if (selectedLayerId) {
+          const selectedLayer = layers.find(l => l.id === selectedLayerId);
+          if (selectedLayer) {
+            const newTransitions = { ...selectedLayer.transitions };
+            if (transData.category === 'in') {
+              newTransitions.in = { type: transData.type, duration: 1 };
+            } else {
+              newTransitions.out = { type: transData.type, duration: 1 };
+            }
+            updateLayer(selectedLayerId, { transitions: newTransitions });
+          }
+        }
+        return;
+      }
+
       // If the data came from our Sidebar, it is wrapped in an 'addLayer' event.
       // We need to extract the actual layer payload.
       if (data.type === 'addLayer' && data.payload) {

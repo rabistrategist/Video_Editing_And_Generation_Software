@@ -86,8 +86,10 @@ interface EditorState {
   sidebarTextColor: string;
   past: HistorySnapshot[];
   future: HistorySnapshot[];
+  aiVideoSrc: string | null;
   
   // Actions
+  setAiVideoSrc: (src: string | null) => void;
   undo: () => void;
   redo: () => void;
   setCurrentTime: (time: number) => void;
@@ -136,6 +138,9 @@ export const useStore = create<EditorState>((set, get) => ({
   sidebarTextColor: "#ffffff",
   past: [],
   future: [],
+  aiVideoSrc: null,
+
+  setAiVideoSrc: (src) => set({ aiVideoSrc: src }),
 
   // Helper to save history
   takeSnapshot: () => {

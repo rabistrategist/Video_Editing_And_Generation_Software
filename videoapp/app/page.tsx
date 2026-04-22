@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Sparkles, Clapperboard } from "lucide-react";
 import dynamic from "next/dynamic";
 import Navbar from "../components/Navbar";
@@ -13,12 +13,54 @@ import ExportModal from "../components/ExportModal";
 import PreviewModal from "../components/PreviewModal";
 import { useStore } from "../store/useStore";
 
-export default function Home() {
+function EditorContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const activeTab = "Edit Clip";
   const undo = useStore(state => state.undo);
   const redo = useStore(state => state.redo);
+  const addLayer = useStore(state => state.addLayer);
   
+  const handledVideoRef = React.useRef<string | null>(null);
+
+  // Handle auto-loading video from query params
+  React.useEffect(() => {
+    const videoUrl = searchParams.get('videoUrl');
+    if (videoUrl && handledVideoRef.current !== videoUrl) {
+      handledVideoRef.current = videoUrl;
+
+      // Prevent adding if it's already on the canvas
+      const alreadyExists = useStore.getState().layers.some(layer => layer.url === videoUrl);
+      
+      if (!alreadyExists) {
+        // Add the video layer
+        addLayer({
+        type: 'video',
+        name: 'AI Generated Video',
+        url: videoUrl,
+        startAt: 0,
+        duration: 10, // Default duration, store updates it on metadata load
+        isVisible: true,
+        isLocked: false,
+        transform: {
+          x: 0,
+          y: 0,
+          width: 1920,
+          height: 1080,
+          rotation: 0,
+          opacity: 1,
+          speed: 1,
+          flipX: false,
+          flipY: false
+        }
+      });
+      }
+      
+      // Clear the query param without refreshing the page
+      router.replace('/', { scroll: false });
+    }
+  }, [searchParams, addLayer, router]);
+
   React.useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
       const isCtrlOrCmd = e.ctrlKey || e.metaKey;
@@ -178,5 +220,13 @@ export default function Home() {
       {isExporting && <ExportModal onClose={() => setIsExporting(false)} />}
       {isPreviewing && <PreviewModal onClose={() => setIsPreviewing(false)} />}
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div className="h-screen w-screen bg-[#0f0f15] flex items-center justify-center text-white">Loading Editor...</div>}>
+      <EditorContent />
+    </Suspense>
   );
 }

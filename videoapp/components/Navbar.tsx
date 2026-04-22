@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Download, MonitorPlay, Undo, Redo, LayoutGrid } from "lucide-react";
+import { Download, MonitorPlay, Undo, Redo, FilmIcon } from "lucide-react";
 import { useStore } from "../store/useStore";
 
 
@@ -66,8 +66,8 @@ export default function Navbar({
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 600, fontSize: '18px' }}>
-          <LayoutGrid size={20} color="var(--accent)" />
-          Video Editor
+          <FilmIcon size={20} color="var(--accent)" />
+          SH Lumen
         </div>
         
         {showProjectTitle && (

@@ -2,7 +2,7 @@ import React from "react";
 import "./globals.css";
 
 export const metadata = {
-  title: "Professional Video Editor",
+  title: "SH Lumen",
   description: "Next.js video editor frontend mockup",
 };
 

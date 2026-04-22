@@ -17,7 +17,8 @@ export async function generateVideo(prompt: string): Promise<{success: boolean; 
         fs.mkdirSync(publicDir, { recursive: true });
       }
 
-      const filename = "generated_video.mp4";
+      const timestamp = Date.now();
+      const filename = `ai-video-${timestamp}.mp4`;
       const savePath = path.join(publicDir, filename);
 
       const requestUrl = `${COLAB_URL}/generate?prompt=${encodeURIComponent(prompt)}`;
@@ -42,7 +43,7 @@ export async function generateVideo(prompt: string): Promise<{success: boolean; 
 
         fileStream.on('finish', () => {
           fileStream.close();
-          resolve({ success: true, url: `/${filename}?t=${Date.now()}` });
+          resolve({ success: true, url: `/${filename}` });
         });
 
         fileStream.on('error', (err: any) => {
