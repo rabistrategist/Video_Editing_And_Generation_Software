@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Sparkles, Clapperboard } from "lucide-react";
 import dynamic from "next/dynamic";
 import Navbar from "../components/Navbar";
 import Sidebar from "../components/Sidebar";
@@ -12,6 +14,8 @@ import PreviewModal from "../components/PreviewModal";
 import { useStore } from "../store/useStore";
 
 export default function Home() {
+  const router = useRouter();
+  const activeTab = "Edit Clip";
   const undo = useStore(state => state.undo);
   const redo = useStore(state => state.redo);
   
@@ -81,7 +85,41 @@ export default function Home() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', backgroundColor: '#0f0f15', color: 'var(--text-main)', userSelect: isResizingTimeline || isResizingProperties || isResizingTrackHeader ? 'none' : 'auto' }}>
-      <Navbar onExport={() => setIsExporting(true)} onPreview={() => setIsPreviewing(true)} />
+      <Navbar onExport={() => setIsExporting(true)} onPreview={() => setIsPreviewing(true)}>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '32px', height: '100%', marginLeft: '82px'}}>
+          {[
+            { id: 'Generate', label: 'Generate', Icon: Sparkles },
+            { id: 'Edit Clip', label: 'Edit Clip', Icon: Clapperboard }
+          ].map(({ id, label, Icon }) => (
+            <div
+              key={id}
+              onClick={() => {
+                if (id !== 'Edit Clip') {
+                  router.push('/aivideo');
+                }
+              }}
+              style={{
+                height: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '0 4px',
+                borderBottom: activeTab === id ? '2px solid var(--accent)' : '2px solid transparent',
+                color: activeTab === id ? 'var(--text-main)' : 'var(--text-muted)',
+                cursor: 'pointer',
+                fontSize: '16px',
+                fontWeight: 500,
+                transition: 'all 0.2s',
+              }}
+              onMouseOver={e => activeTab !== id && (e.currentTarget.style.color = 'var(--text-main)')}
+              onMouseOut={e => activeTab !== id && (e.currentTarget.style.color = 'var(--text-muted)')}
+            >
+              <Icon size={16} />
+              {label}
+            </div>
+          ))}
+        </nav>
+      </Navbar>
       
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden', position: 'relative' }}>
         <Sidebar />

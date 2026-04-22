@@ -1,5 +1,8 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Sparkles, Clapperboard } from 'lucide-react';
+import Navbar from '@/components/Navbar';
 import { generateVideo } from './actions';
 
 // Icons as SVG components to avoid external dependency issues
@@ -49,22 +52,22 @@ const Dropdown = ({ label, options, selected, onChange, isMulti = true, hasIcon 
 
   return (
     <div className="space-y-1.5 relative" ref={dropdownRef}>
-      <label className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">{label}</label>
+      <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-bold">{label}</label>
       <div
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-between bg-[#0a0a0a] p-2.5 rounded border ${isOpen ? 'border-blue-500 ring-1 ring-blue-500/20' : 'border-[#333]'} cursor-pointer hover:border-[#555] transition-all`}
+        className={`flex items-center justify-between bg-[var(--bg-dark)] p-2.5 rounded border ${isOpen ? 'border-[var(--accent)] ring-1 ring-[var(--accent)]/20' : 'border-[var(--border)]'} cursor-pointer hover:border-[var(--text-muted)] transition-all`}
       >
         <div className="flex items-center gap-2 overflow-hidden">
-          {hasIcon && <div className="w-4 h-4 bg-red-600 rounded-sm flex-shrink-0"></div>}
-          <span className="text-sm truncate font-medium text-gray-200">{displayText}</span>
+          {hasIcon && <div className="w-4 h-4 bg-[var(--accent)] rounded-sm flex-shrink-0"></div>}
+          <span className="text-sm truncate font-medium text-[var(--text-main)]">{displayText}</span>
         </div>
-        <div className={`transition-transform duration-200 ${isOpen ? 'rotate-180 text-blue-500' : 'text-gray-500'}`}>
+        <div className={`transition-transform duration-200 ${isOpen ? 'rotate-180 text-[var(--accent)]' : 'text-[var(--text-muted)]'}`}>
           <Icons.ChevronDown />
         </div>
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-[#1e1e1e] border border-[#333] rounded shadow-2xl z-50 max-h-60 overflow-y-auto py-1 ring-1 ring-black/50">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--bg-element)] border border-[var(--border)] rounded shadow-2xl z-50 max-h-60 overflow-y-auto py-1 ring-1 ring-black/50">
           {options.map((option) => (
             <div
               key={option}
@@ -72,13 +75,13 @@ const Dropdown = ({ label, options, selected, onChange, isMulti = true, hasIcon 
                 onChange(option);
                 if (!isMulti) setIsOpen(false);
               }}
-              className="flex items-center justify-between px-3 py-2 hover:bg-[#2a2a2a] cursor-pointer group transition-colors"
+              className="flex items-center justify-between px-3 py-2 hover:bg-[var(--bg-panel)] cursor-pointer group transition-colors"
             >
-              <span className={`text-sm ${selected.includes(option) ? 'text-blue-400 font-medium' : 'text-gray-300'}`}>
+              <span className={`text-sm ${selected.includes(option) ? 'text-[var(--accent)] font-medium' : 'text-[var(--text-muted)]'}`}>
                 {option}
               </span>
               {selected.includes(option) && (
-                <span className="text-blue-500 animate-in zoom-in-50">
+                <span className="text-[var(--accent)] animate-in zoom-in-50">
                   <Icons.Check />
                 </span>
               )}
@@ -91,6 +94,7 @@ const Dropdown = ({ label, options, selected, onChange, isMulti = true, hasIcon 
 };
 
 export default function FireflyUI() {
+  const router = useRouter();
   const [resolutions, setResolutions] = useState(['540p']);
   const [aspectRatios, setAspectRatios] = useState(['Widescreen (16:9)']);
   const [fps, setFps] = useState(['24 FPS']);
@@ -143,49 +147,50 @@ export default function FireflyUI() {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-[#121212] text-white">
-      {/* Top Navbar */}
-      <header className="h-14 border-b border-[#333] flex items-center justify-between px-4 bg-[#1e1e1e]">
-        <div className="flex items-center gap-4">
-          <div className="bg-red-600 font-bold px-2 py-1 rounded text-xs">Fi</div>
-          <div className="flex items-center gap-2 cursor-pointer">
-            <span className="text-sm font-medium">Generate video</span>
-            <Icons.ChevronDown />
-          </div>
-        </div>
-
+    <div className="flex flex-col h-screen bg-[var(--bg-dark)] text-white">
+      <Navbar
+        showProjectTitle={false}
+        showUndoRedo={false}
+        showPreview={false}
+        primaryActionText="Download"
+        onPrimaryAction={() => {
+          if (videoSrc) {
+            const link = document.createElement('a');
+            link.href = videoSrc;
+            link.download = 'generated_video.mp4';
+            link.click();
+          } else {
+            alert("No video to download yet!");
+          }
+        }}
+      >
         <nav className="flex items-center gap-8 h-full">
-          {['Gallery', 'Generate', 'Edit'].map((tab) => (
+          {[
+            { id: 'Generate', label: 'Generate', Icon: Sparkles },
+            { id: 'Edit Clip', label: 'Edit Clip', Icon: Clapperboard }
+          ].map(({ id, label, Icon }) => (
             <div
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`h-full flex items-center px-1 border-b-2 cursor-pointer transition-colors ${activeTab === tab ? 'border-white text-white' : 'border-transparent text-gray-400 hover:text-white'}`}
+              key={id}
+              onClick={() => {
+                if (id === 'Edit Clip') {
+                  router.push('/');
+                } else {
+                  setActiveTab(id);
+                }
+              }}
+              className={`h-full flex items-center gap-2 px-1 border-b-2 cursor-pointer transition-colors ${activeTab === id ? 'border-[var(--accent)] text-white' : 'border-transparent text-[var(--text-muted)] hover:text-white'}`}
             >
-              {tab}
+              <Icon size={16} />
+              {label}
             </div>
           ))}
         </nav>
-
-        <div className="flex items-center gap-4">
-          <button className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#333] hover:bg-[#444] text-sm transition-colors">
-            <Icons.Download />
-            Download
-          </button>
-          <button className="px-4 py-1.5 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-sm font-semibold hover:opacity-90 transition-opacity">
-            Upgrade
-          </button>
-          <div className="flex items-center gap-4 ml-2">
-            <Icons.MessageSquare />
-            <Icons.Grid />
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-400 to-green-300"></div>
-          </div>
-        </div>
-      </header>
+      </Navbar>
 
       {/* Main Content Area */}
       <div className="flex flex-1 overflow-hidden">
         {/* Left Sidebar */}
-        <aside className="w-[300px] border-r border-[#333] bg-[#1e1e1e] flex flex-col overflow-y-auto">
+        <aside className="w-[300px] border-r border-[var(--border)] bg-[var(--bg-panel)] flex flex-col overflow-y-auto">
           {activeTab === 'Edit' ? (
             <div className="p-4 space-y-6">
               <h2 className="text-lg font-bold mb-4">Edit Video</h2>
@@ -193,7 +198,7 @@ export default function FireflyUI() {
           ) : (
             <>
               {/* General Settings */}
-              <section className="p-4 border-b border-[#333]">
+              <section className="p-4 border-b border-[var(--border)]">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-sm font-semibold flex items-center gap-2">
                     <Icons.ChevronDown />
@@ -237,7 +242,7 @@ export default function FireflyUI() {
               </section>
 
               {/* Frames */}
-              <section className="p-4 border-b border-[#333]">
+              <section className="p-4 border-b border-[var(--border)]">
                 <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
                   <Icons.ChevronDown />
                   Frames <Icons.Help />
@@ -245,14 +250,14 @@ export default function FireflyUI() {
                 <div className="grid grid-cols-2 gap-4">
                   <div
                     onClick={() => simulateUpload(setFirstFrame, 'first_frame')}
-                    className={`aspect-video rounded border border-dashed flex flex-col items-center justify-center gap-2 text-xs transition-colors cursor-pointer ${firstFrame ? 'bg-blue-900/20 border-blue-500 text-blue-400' : 'bg-[#0a0a0a] border-[#333] text-gray-400 hover:bg-[#121212]'}`}
+                    className={`aspect-video rounded border border-dashed flex flex-col items-center justify-center gap-2 text-xs transition-colors cursor-pointer ${firstFrame ? 'bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]' : 'bg-[var(--bg-dark)] border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-dark)]/80'}`}
                   >
                     <Icons.Upload />
                     {firstFrame ? 'Frame 1' : 'First'}
                   </div>
                   <div
                     onClick={() => simulateUpload(setLastFrame, 'last_frame')}
-                    className={`aspect-video rounded border border-dashed flex flex-col items-center justify-center gap-2 text-xs transition-colors cursor-pointer ${lastFrame ? 'bg-blue-900/20 border-blue-500 text-blue-400' : 'bg-[#0a0a0a] border-[#333] text-gray-400 hover:bg-[#121212]'}`}
+                    className={`aspect-video rounded border border-dashed flex flex-col items-center justify-center gap-2 text-xs transition-colors cursor-pointer ${lastFrame ? 'bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]' : 'bg-[var(--bg-dark)] border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-dark)]/80'}`}
                   >
                     <Icons.Upload />
                     {lastFrame ? 'Frame N' : 'Last'}
@@ -266,12 +271,12 @@ export default function FireflyUI() {
                   <Icons.ChevronDown />
                   Composition
                 </h3>
-                <p className="text-[11px] text-gray-400 mb-4">
+                <p className="text-[11px] text-[var(--text-muted)] mb-4">
                   Videos must be 10 seconds long and under 10 MB. Longer videos will be trimmed to the first 5 seconds.
                 </p>
 
                 <div className="space-y-4">
-                  <div className="bg-[#252525] p-4 rounded-lg border border-[#333]">
+                  <div className="bg-[var(--bg-element)] p-4 rounded-lg border border-[var(--border)]">
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-xs font-medium flex items-center gap-2">
                         <Icons.Upload />
@@ -281,18 +286,18 @@ export default function FireflyUI() {
                     </div>
                     <div
                       onClick={() => simulateUpload(setReferenceVideo, 'ref_video')}
-                      className={`aspect-square rounded border border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer transition-colors ${referenceVideo ? 'bg-blue-900/20 border-blue-500 text-blue-400' : 'bg-[#121212] border-[#333] hover:bg-[#1a1a1a]'}`}
+                      className={`aspect-square rounded border border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer transition-colors ${referenceVideo ? 'bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]' : 'bg-[var(--bg-dark)] border-[var(--border)] hover:bg-[var(--bg-panel)]'}`}
                     >
-                      <div className={`p-2 rounded-full ${referenceVideo ? 'bg-blue-500 text-white' : 'bg-[#1e1e1e]'}`}>
+                      <div className={`p-2 rounded-full ${referenceVideo ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-panel)]'}`}>
                         <Icons.Upload />
                       </div>
-                      <button className={`px-4 py-1.5 rounded-full text-xs transition-colors ${referenceVideo ? 'bg-blue-600' : 'bg-[#333] hover:bg-[#444]'}`}>
+                      <button className={`px-4 py-1.5 rounded-full text-xs transition-colors ${referenceVideo ? 'bg-[var(--accent-hover)]' : 'bg-[var(--bg-element)] hover:bg-[var(--border)]'}`}>
                         {referenceVideo ? 'Video uploaded' : 'Upload video'}
                       </button>
                       {referenceVideo && (
                         <button
                           onClick={(e) => { e.stopPropagation(); setReferenceVideo(null); }}
-                          className="text-xs text-gray-500 hover:text-white flex items-center gap-1 mt-2"
+                          className="text-xs text-[var(--text-muted)] hover:text-white flex items-center gap-1 mt-2"
                         >
                           <Icons.History />
                           Reset
@@ -307,12 +312,12 @@ export default function FireflyUI() {
         </aside>
 
         {/* Central Display */}
-        <main className="flex-1 bg-[#121212] p-8 flex flex-col items-center justify-center relative overflow-hidden">
+        <main className="flex-1 bg-[var(--bg-dark)] p-8 flex flex-col items-center justify-center relative overflow-hidden">
           <div className="w-full max-w-4xl relative group">
-            <div className="aspect-video rounded-3xl overflow-hidden mb-8 shadow-2xl relative bg-black border border-[#333]">
+            <div className="aspect-video rounded-3xl overflow-hidden mb-8 shadow-2xl relative bg-black border border-[var(--border)]">
               {(isGenerating || isProcessing) ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[#121212] z-10">
-                  <div className="w-16 h-16 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[var(--bg-dark)] z-10">
+                  <div className="w-16 h-16 border-4 border-[var(--accent)]/30 border-t-[var(--accent)] rounded-full animate-spin"></div>
                   <span className="text-sm font-medium animate-pulse text-white">{isGenerating ? "Generating video on Colab GPU..." : "Processing video with FFmpeg..."}</span>
                 </div>
               ) : videoSrc ? (
@@ -344,17 +349,17 @@ export default function FireflyUI() {
           {/* Bottom Prompt Bar */}
           {activeTab === 'Generate' && (
             <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-4">
-              <div className="bg-[#1e1e1e] rounded-2xl border border-[#333] p-4 shadow-xl">
+              <div className="bg-[var(--bg-panel)] rounded-2xl border border-[var(--border)] p-4 shadow-xl">
                 <div className="flex gap-4 items-end">
                   <div className="flex-1 flex flex-col gap-3">
                     <div className="flex gap-2">
-                      <div className="text-[10px] bg-[#333] px-2 py-0.5 rounded text-gray-300 cursor-pointer">View All</div>
-                      <div className="w-12 h-8 rounded bg-[#0a0a0a] overflow-hidden border border-blue-500 cursor-pointer">
+                      <div className="text-[10px] bg-[var(--bg-element)] px-2 py-0.5 rounded text-[var(--text-muted)] cursor-pointer">View All</div>
+                      <div className="w-12 h-8 rounded bg-[var(--bg-dark)] overflow-hidden border border-[var(--accent)] cursor-pointer">
                         <img src="https://images.unsplash.com/photo-1514565131-fce0801e5785?q=80&w=150&auto=format&fit=crop" className="w-full h-full mb-4 object-cover opacity-50" />
                       </div>
                     </div>
                     <div className="flex flex-col">
-                      <span className="text-[10px] text-gray-500 font-medium uppercase">Prompt</span>
+                      <span className="text-[10px] text-[var(--text-muted)] font-medium uppercase">Prompt</span>
                       <textarea
                         className="bg-transparent border-none focus:outline-none focus:ring-0 text-sm resize-none h-12 w-full mt-1 text-white"
                         value={promptText}
@@ -368,8 +373,8 @@ export default function FireflyUI() {
                       onClick={handleGenerate}
                       disabled={isGenerating}
                       className={`text-white px-6 py-3 rounded-full font-semibold flex items-center gap-2 shadow-lg transition-all ${isGenerating
-                        ? 'bg-blue-600/50 cursor-not-allowed shadow-none'
-                        : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20 active:scale-95'
+                        ? 'bg-[var(--accent)]/50 cursor-not-allowed shadow-none'
+                        : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)] shadow-[var(--accent)]/20 active:scale-95'
                         }`}
                     >
                       {isGenerating ? (
