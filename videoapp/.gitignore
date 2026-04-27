@@ -47,4 +47,3 @@ next-env.d.ts
 /temp/renders/*.webm
 /public/ai-video-*.mp4
 /public/ai-video-*.webm
-

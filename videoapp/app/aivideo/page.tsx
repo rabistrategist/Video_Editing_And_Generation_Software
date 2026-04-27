@@ -1,347 +1,365 @@
 "use client";
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Sparkles, Clapperboard } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { useStore } from '@/store/useStore';
-import { generateVideo } from './actions';
+import { generateVideo, type VideoSettings } from './actions';
 
-// Icons as SVG components to avoid external dependency issues
-const Icons = {
-  Menu: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>,
-  ChevronDown: () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>,
-  Download: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>,
-  Check: () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>,
-  MessageSquare: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>,
-  Grid: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>,
-  Upload: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>,
-  History: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline><path d="M3.3 7a9 9 0 1 1 0 10"></path></svg>,
-  Help: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>,
-  Music: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg>,
-  Scissors: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="6" cy="6" r="3"></circle><circle cx="6" cy="18" r="3"></circle><line x1="20" y1="4" x2="8.12" y2="15.88"></line><line x1="14.47" y1="14.48" x2="20" y2="20"></line><line x1="8.12" y1="8.12" x2="12" y2="12"></line></svg>,
-  Split: () => <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20"></path><path d="M8 6l-4 6 4 6"></path><path d="M16 6l4 6-4 6"></path></svg>,
+// ─── SVG Icons ────────────────────────────────────────────────────────────────
+const Ico = {
+  Close:    () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>,
+  Play:     () => <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>,
+  Film:     () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>,
+  Wand:     () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8 19 13"/><path d="M15 9h0"/><path d="M17.8 6.2 19 5"/><path d="m3 21 9-9"/><path d="M12.2 6.2 11 5"/></svg>,
+  Spinner:  () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{animation:'spin 1s linear infinite'}}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>,
+
+  // Model icons
+  ModelA:   () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>,
+  ModelB:   () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>,
+  ModelC:   () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>,
+
+  // Resolution icons
+  Res360:   () => <svg width="13" height="10" viewBox="0 0 26 18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="1" y="1" width="24" height="16" rx="1.5"/></svg>,
+  Res540:   () => <svg width="15" height="11" viewBox="0 0 30 20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="1" y="1" width="28" height="18" rx="1.5"/></svg>,
+  Res720:   () => <svg width="16" height="11" viewBox="0 0 32 20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="1" y="1" width="30" height="18" rx="1.5"/><line x1="16" y1="5" x2="16" y2="15" strokeWidth="1.5" strokeOpacity="0.6"/></svg>,
+  Res1080:  () => <svg width="16" height="11" viewBox="0 0 32 20" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><rect x="1" y="1" width="30" height="18" rx="1.5"/><line x1="11" y1="5" x2="11" y2="15" strokeWidth="1.5" strokeOpacity="0.6"/><line x1="21" y1="5" x2="21" y2="15" strokeWidth="1.5" strokeOpacity="0.6"/></svg>,
+
+  // Aspect ratio icons
+  Wide:     () => <svg width="16" height="10" viewBox="0 0 32 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="1" y="1" width="30" height="16" rx="1.5"/></svg>,
+  Vertical: () => <svg width="9" height="15" viewBox="0 0 16 26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="1" y="1" width="14" height="24" rx="1.5"/></svg>,
+  Square:   () => <svg width="13" height="13" viewBox="0 0 22 22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="1" y="1" width="20" height="20" rx="1.5"/></svg>,
+  Cinema:   () => <svg width="18" height="8" viewBox="0 0 36 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><rect x="1" y="1" width="34" height="12" rx="1.5"/></svg>,
+
+  // FPS icons
+  FPS8:     () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>,
+  FPS16:    () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><polyline points="12 6 12 12 15 13.5"/><line x1="17" y1="7" x2="19" y2="5" strokeWidth="1.5"/></svg>,
+  FPS24:    () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>,
+  FPS30:    () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/><circle cx="19" cy="5" r="2" fill="currentColor" stroke="none"/></svg>,
+
+  // Duration icons
+  Dur2:     () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 8v4"/></svg>,
+  Dur4:     () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l2.5 2.5"/></svg>,
+  Dur5:     () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>,
+  Dur8:     () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 3.5"/></svg>,
+  Dur10:    () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 3"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg>,
 };
 
-type DropdownProps = {
-  label: string;
-  options: string[];
-  selected: string[];
-  onChange: (val: string) => void;
-  isMulti?: boolean;
-  hasIcon?: boolean;
+// ─── Types ────────────────────────────────────────────────────────────────────
+type GenerationRecord = {
+  id: string; prompt: string; url: string; timestamp: number;
+  settings: { model: string; resolution: string; aspectRatio: string; fps: string; duration: string };
 };
+type IBOption = { value: string; label: string; Icon: () => React.ReactNode; desc?: string };
 
-const Dropdown = ({ label, options, selected, onChange, isMulti = true, hasIcon = false }: DropdownProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const displayText = selected.length === 0
-    ? 'Select'
-    : selected.length > 2
-      ? `${selected.length} selected`
-      : selected.join(', ');
-
+// ─── IconButtonGroup ──────────────────────────────────────────────────────────
+function IconButtonGroup({ label, sectionIcon: SectionIcon, options, selected, onChange, cols = 4 }: {
+  label: string; sectionIcon: () => React.ReactNode;
+  options: IBOption[]; selected: string; onChange: (v: string) => void; cols?: number;
+}) {
   return (
-    <div className="space-y-1.5 relative" ref={dropdownRef}>
-      <label className="text-[10px] text-[var(--text-muted)] uppercase tracking-widest font-bold">{label}</label>
-      <div
-        onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-between bg-[var(--bg-dark)] p-2.5 rounded border ${isOpen ? 'border-[var(--accent)] ring-1 ring-[var(--accent)]/20' : 'border-[var(--border)]'} cursor-pointer hover:border-[var(--text-muted)] transition-all`}
-      >
-        <div className="flex items-center gap-2 overflow-hidden">
-          {hasIcon && <div className="w-4 h-4 bg-[var(--accent)] rounded-sm flex-shrink-0"></div>}
-          <span className="text-sm truncate font-medium text-[var(--text-main)]">{displayText}</span>
-        </div>
-        <div className={`transition-transform duration-200 ${isOpen ? 'rotate-180 text-[var(--accent)]' : 'text-[var(--text-muted)]'}`}>
-          <Icons.ChevronDown />
-        </div>
+    <div className="space-y-2">
+      <div className="flex items-center gap-1.5">
+        <span className="text-[var(--text-muted)] opacity-60"><SectionIcon /></span>
+        <span className="text-[9px] text-[var(--text-muted)] uppercase tracking-[0.14em] font-bold">{label}</span>
       </div>
-
-      {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--bg-element)] border border-[var(--border)] rounded shadow-2xl z-50 max-h-60 overflow-y-auto py-1 ring-1 ring-black/50">
-          {options.map((option) => (
-            <div
-              key={option}
-              onClick={() => {
-                onChange(option);
-                if (!isMulti) setIsOpen(false);
-              }}
-              className="flex items-center justify-between px-3 py-2 hover:bg-[var(--bg-panel)] cursor-pointer group transition-colors"
+      <div className="grid gap-1" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+        {options.map(({ value, label: lbl, Icon, desc }) => {
+          const active = selected === value;
+          return (
+            <button key={value} onClick={() => onChange(value)} title={desc ?? lbl}
+              className={`
+                relative flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg
+                text-[9px] font-semibold border transition-all duration-150 select-none group
+                ${active
+                  ? 'bg-[var(--accent)]/15 border-[var(--accent)]/60 text-[var(--accent)]'
+                  : 'bg-[var(--bg-dark)]/70 border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-element)] hover:border-white/20 hover:text-white'
+                }
+              `}
+              style={active ? { boxShadow: '0 0 10px 0 var(--accent-glow, rgba(139,92,246,0.25))' } : {}}
             >
-              <span className={`text-sm ${selected.includes(option) ? 'text-[var(--accent)] font-medium' : 'text-[var(--text-muted)]'}`}>
-                {option}
+              {active && <span className="absolute top-1 right-1 w-1 h-1 rounded-full bg-[var(--accent)]" />}
+              <span className={`transition-transform duration-150 ${active ? 'scale-110' : 'group-hover:scale-105'}`}>
+                <Icon />
               </span>
-              {selected.includes(option) && (
-                <span className="text-[var(--accent)] animate-in zoom-in-50">
-                  <Icons.Check />
-                </span>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+              <span className="leading-none">{lbl}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
-};
+}
 
+// ─── ModelCardSelector ────────────────────────────────────────────────────────
+function ModelCardSelector({ options, selected, onChange }: {
+  options: { value: string; label: string; tag: string; Icon: () => React.ReactNode }[];
+  selected: string; onChange: (v: string) => void;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-1.5">
+        <span className="text-[var(--text-muted)] opacity-60"><Ico.ModelA /></span>
+        <span className="text-[9px] text-[var(--text-muted)] uppercase tracking-[0.14em] font-bold">Model</span>
+      </div>
+      <div className="flex flex-col gap-1">
+        {options.map(({ value, label, tag, Icon }) => {
+          const active = selected === value;
+          return (
+            <button key={value} onClick={() => onChange(value)}
+              className={`
+                w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-left
+                transition-all duration-150
+                ${active
+                  ? 'bg-[var(--accent)]/12 border-[var(--accent)]/50'
+                  : 'bg-[var(--bg-dark)]/60 border-[var(--border)] hover:bg-[var(--bg-element)] hover:border-white/20'
+                }
+              `}
+              style={active ? { boxShadow: '0 0 12px 0 var(--accent-glow, rgba(139,92,246,0.2))' } : {}}
+            >
+              <span className={`w-7 h-7 rounded-md flex items-center justify-center flex-shrink-0 transition-colors
+                ${active ? 'bg-[var(--accent)]/25 text-[var(--accent)]' : 'bg-[var(--bg-element)] text-[var(--text-muted)]'}`}>
+                <Icon />
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className={`text-[11px] font-semibold leading-none truncate ${active ? 'text-[var(--accent)]' : 'text-[var(--text-main)]'}`}>{label}</p>
+                <p className="text-[9px] text-[var(--text-muted)] mt-0.5 truncate opacity-60">{tag}</p>
+              </div>
+              {active && <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] flex-shrink-0" />}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── View All Modal ───────────────────────────────────────────────────────────
+function ViewAllModal({ history, onClose, onSelect }: {
+  history: GenerationRecord[]; onClose: () => void; onSelect: (r: GenerationRecord) => void;
+}) {
+  const backdropRef = useRef<HTMLDivElement>(null);
+  return (
+    <div ref={backdropRef} onClick={e => { if (e.target === backdropRef.current) onClose(); }}
+      className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm flex items-end justify-center pb-24">
+      <div className="bg-[var(--bg-panel)] border border-[var(--border)] rounded-2xl shadow-2xl w-full max-w-4xl mx-6 overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+          <div className="flex items-center gap-2">
+            <Ico.Film />
+            <h2 className="font-semibold text-sm">All Generated Videos</h2>
+            {history.length > 0 && <span className="text-[10px] bg-[var(--accent)]/20 text-[var(--accent)] px-2 py-0.5 rounded-full font-bold">{history.length}</span>}
+          </div>
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-white p-1 rounded hover:bg-[var(--bg-element)] transition-colors"><Ico.Close /></button>
+        </div>
+        <div className="p-5 max-h-[60vh] overflow-y-auto">
+          {history.length === 0 ? (
+            <div className="text-center py-12 text-[var(--text-muted)]">
+              <div className="mx-auto mb-3 w-8 h-8 opacity-40 flex items-center justify-center"><Ico.Film /></div>
+              <p className="text-sm">No videos generated yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              {history.map(r => (
+                <div key={r.id} onClick={() => { onSelect(r); onClose(); }}
+                  className="group relative rounded-xl overflow-hidden border border-[var(--border)] cursor-pointer hover:border-[var(--accent)] transition-all hover:scale-[1.02] bg-black">
+                  <video src={r.url} className="w-full aspect-video object-cover opacity-80 group-hover:opacity-100 transition-opacity" muted loop
+                    onMouseEnter={e => (e.currentTarget as HTMLVideoElement).play()}
+                    onMouseLeave={e => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }} />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2">
+                    <p className="text-[10px] text-white line-clamp-2 leading-tight">{r.prompt}</p>
+                  </div>
+                  <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-sm rounded px-1.5 py-0.5">
+                    <span className="text-[9px] text-[var(--text-muted)]">{r.settings.resolution} · {r.settings.fps}</span>
+                  </div>
+                  <div className="px-2 py-1.5 bg-[var(--bg-element)]">
+                    <p className="text-[9px] text-[var(--text-muted)] truncate">{new Date(r.timestamp).toLocaleTimeString()}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Divider ─────────────────────────────────────────────────────────────────
+const Divider = () => <div className="h-px bg-[var(--border)] opacity-40" />;
+
+// ─── Section icons ────────────────────────────────────────────────────────────
+const IcoResolution = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="1"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>;
+const IcoAspect     = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="1"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18" strokeWidth="1" strokeOpacity="0.5"/></svg>;
+const IcoFPS        = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>;
+const IcoClock      = () => <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 14"/></svg>;
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function FireflyUI() {
   const router = useRouter();
-  const [resolutions, setResolutions] = useState(['540p']);
-  const [aspectRatios, setAspectRatios] = useState(['Widescreen (16:9)']);
-  const [fps, setFps] = useState(['24 FPS']);
-  const [durations, setDurations] = useState(['5 seconds']);
-  const [model, setModel] = useState(['Firefly Video']);
 
-  const toggleSelection = (current: string[], setter: React.Dispatch<React.SetStateAction<string[]>>, val: string, isMulti: boolean) => {
-    if (!isMulti) {
-      setter([val]);
-      return;
-    }
-    if (current.includes(val)) {
-      if (current.length > 1) {
-        setter(current.filter(i => i !== val));
-      }
-    } else {
-      setter([...current, val]);
-    }
-  };
-  const [firstFrame, setFirstFrame] = useState<string | null>(null);
-  const [lastFrame, setLastFrame] = useState<string | null>(null);
-  const [referenceVideo, setReferenceVideo] = useState<string | null>(null);
+  const [model, setModel]           = useState('damo-vilab/text-to-video-ms-1.7b');
+  const [resolution, setResolution] = useState('540p');
+  const [aspectRatio, setAspect]    = useState('Widescreen (16:9)');
+  const [fps, setFps]               = useState('24 FPS');
+  const [duration, setDuration]     = useState('5 seconds');
 
-  const [promptText, setPromptText] = useState("a cat walking on the moon");
-  const [isGenerating, setIsGenerating] = useState(false);
-  const aiVideoSrc = useStore(state => state.aiVideoSrc);
-  const setAiVideoSrc = useStore(state => state.setAiVideoSrc);
+  const [promptText, setPrompt]       = useState('a cat walking on the moon');
+  const [isGenerating, setGenerating] = useState(false);
+  const aiVideoSrc    = useStore(s => s.aiVideoSrc);
+  const setAiVideoSrc = useStore(s => s.setAiVideoSrc);
 
-  const [activeTab, setActiveTab] = useState('Generate');
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [history, setHistory]         = useState<GenerationRecord[]>([]);
+  const [showViewAll, setShowViewAll] = useState(false);
+  const [activeTab, setActiveTab]     = useState('Generate');
+
+  // ── Option data ──
+  const MODEL_OPTIONS = [
+    { value: 'damo-vilab/text-to-video-ms-1.7b',    label: 'MS Video 1.7B',  tag: 'damo-vilab · balanced',    Icon: Ico.ModelA },
+    { value: 'damo-vilab/text-to-video-ms-1.7b-xl', label: 'MS Video XL',    tag: 'damo-vilab · high detail',  Icon: Ico.ModelB },
+    { value: 'cerspense/zeroscope_v2_xl',            label: 'Zeroscope XL',   tag: 'cerspense · cinematic',     Icon: Ico.ModelC },
+    { value: 'cerspense/zeroscope_v2_576w',          label: 'Zeroscope 576w', tag: 'cerspense · fast',          Icon: Ico.ModelA },
+  ];
+
+  const RESOLUTION_OPTS: IBOption[] = [
+    { value: '360p',  label: '360p',  Icon: Ico.Res360,  desc: 'Low — fastest' },
+    { value: '540p',  label: '540p',  Icon: Ico.Res540,  desc: 'Medium — balanced' },
+    { value: '720p',  label: '720p',  Icon: Ico.Res720,  desc: 'HD — sharp' },
+    { value: '1080p', label: '1080p', Icon: Ico.Res1080, desc: 'Full HD — slow' },
+  ];
+
+  const ASPECT_OPTS: IBOption[] = [
+    { value: 'Widescreen (16:9)', label: '16:9', Icon: Ico.Wide,     desc: 'Widescreen' },
+    { value: 'Vertical (9:16)',   label: '9:16', Icon: Ico.Vertical, desc: 'Vertical / Reels' },
+    { value: 'Square (1:1)',      label: '1:1',  Icon: Ico.Square,   desc: 'Square' },
+    { value: 'Cinematic (21:9)',  label: '21:9', Icon: Ico.Cinema,   desc: 'Cinematic' },
+  ];
+
+  const FPS_OPTS: IBOption[] = [
+    { value: '8 FPS',  label: '8',  Icon: Ico.FPS24,  desc: '8 FPS — slowest' },
+    { value: '16 FPS', label: '16', Icon: Ico.FPS24, desc: '16 FPS' },
+    { value: '24 FPS', label: '24', Icon: Ico.FPS24, desc: '24 FPS — cinematic' },
+    { value: '30 FPS', label: '30', Icon: Ico.FPS30, desc: '30 FPS — smooth' },
+  ];
+
+  const DURATION_OPTS: IBOption[] = [
+    { value: '2 seconds',  label: '2s',  Icon: Ico.Dur2,  desc: '2 seconds' },
+    { value: '4 seconds',  label: '4s',  Icon: Ico.Dur4,  desc: '4 seconds' },
+    { value: '5 seconds',  label: '5s',  Icon: Ico.Dur5,  desc: '5 seconds' },
+    { value: '8 seconds',  label: '8s',  Icon: Ico.Dur8,  desc: '8 seconds' },
+    { value: '10 seconds', label: '10s', Icon: Ico.Dur10, desc: '10 seconds' },
+  ];
 
   const handleGenerate = async () => {
-    if (!promptText.trim()) return;
-    setIsGenerating(true);
+    if (!promptText.trim() || isGenerating) return;
+    setGenerating(true);
     try {
-      const result = await generateVideo(promptText);
+      const result = await generateVideo(promptText, { model, resolution, aspectRatio, fps, duration });
       if (result.success && result.url) {
         setAiVideoSrc(result.url);
+        setHistory(prev => [{
+          id: `gen-${Date.now()}`, prompt: promptText, url: result.url!,
+          timestamp: Date.now(), settings: { model, resolution, aspectRatio, fps, duration },
+        }, ...prev]);
       } else {
-        alert(result.error || "Failed to generate video. Make sure ngrok is running and try again.");
+        alert(result.error || 'Generation failed. Make sure ngrok is running.');
       }
-    } catch (err) {
-      alert("Error generating video");
+    } catch {
+      alert('Error generating video');
     } finally {
-      setIsGenerating(false);
+      setGenerating(false);
     }
   };
 
-  const simulateUpload = (setter: (val: string | null) => void, name: string) => {
-    setter(`${name}_uploaded.jpg`);
-  };
+  const currentModelLabel = MODEL_OPTIONS.find(m => m.value === model)?.label ?? 'Model';
 
   return (
     <div className="flex flex-col h-screen bg-[var(--bg-dark)] text-white">
-      <Navbar
-        showProjectTitle={false}
-        showUndoRedo={false}
-        showPreview={false}
+
+      {/* ── Navbar ── */}
+      <Navbar showProjectTitle={false} showUndoRedo={false} showPreview={false}
         primaryActionText="Download"
         onPrimaryAction={() => {
-          if (aiVideoSrc) {
-            const link = document.createElement('a');
-            link.href = aiVideoSrc;
-            link.download = 'generated_video.mp4';
-            link.click();
-          } else {
-            alert("No video to download yet!");
-          }
+          if (aiVideoSrc) { const a = document.createElement('a'); a.href = aiVideoSrc; a.download = 'generated_video.mp4'; a.click(); }
+          else alert('No video to download yet!');
         }}
       >
         <nav className="flex items-center gap-8 h-full">
-          {[
-            { id: 'Generate', label: 'Generate', Icon: Sparkles },
-            { id: 'Edit Clip', label: 'Edit Clip', Icon: Clapperboard }
-          ].map(({ id, label, Icon }) => (
-            <div
-              key={id}
-              onClick={() => {
-                if (id === 'Edit Clip') {
-                  const url = aiVideoSrc ? `/?videoUrl=${encodeURIComponent(aiVideoSrc)}` : '/';
-                  router.push(url);
-                } else {
-                  setActiveTab(id);
-                }
-              }}
-              className={`h-full flex items-center gap-2 px-1 border-b-2 cursor-pointer transition-colors ${activeTab === id ? 'border-[var(--accent)] text-white' : 'border-transparent text-[var(--text-muted)] hover:text-white'}`}
-            >
-              <Icon size={16} />
-              {label}
+          {[{ id: 'Generate', label: 'Generate', Icon: Sparkles }, { id: 'Editor', label: 'Editor', Icon: Clapperboard }].map(({ id, label, Icon }) => (
+            <div key={id}
+              onClick={() => id === 'Editor' ? router.push(aiVideoSrc ? `/?videoUrl=${encodeURIComponent(aiVideoSrc)}` : '/') : setActiveTab(id)}
+              className={`h-full flex items-center gap-2 px-1 border-b-2 cursor-pointer transition-colors
+                ${activeTab === id ? 'border-[var(--accent)] text-white' : 'border-transparent text-[var(--text-muted)] hover:text-white'}`}>
+              <Icon size={16} />{label}
             </div>
           ))}
         </nav>
       </Navbar>
 
-      {/* Main Content Area */}
+      {/* ── Body ── */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Left Sidebar */}
-        <aside className="w-[300px] border-r border-[var(--border)] bg-[var(--bg-panel)] flex flex-col overflow-y-auto">
-          {activeTab === 'Edit' ? (
-            <div className="p-4 space-y-6">
-              <h2 className="text-lg font-bold mb-4">Edit Video</h2>
+
+        {/* ─────────────── Left Sidebar ─────────────── */}
+        <aside className="w-[234px] border-r border-[var(--border)] bg-[var(--bg-panel)] flex flex-col overflow-y-auto">
+          <div className="p-4 space-y-5">
+
+            {/* Model */}
+            <ModelCardSelector options={MODEL_OPTIONS} selected={model} onChange={setModel} />
+
+            <Divider />
+
+            {/* Resolution — 4 cols */}
+            <IconButtonGroup label="Resolution" sectionIcon={IcoResolution}
+              options={RESOLUTION_OPTS} selected={resolution} onChange={setResolution} cols={4} />
+
+            {/* Aspect Ratio — 4 cols */}
+            <IconButtonGroup label="Aspect Ratio" sectionIcon={IcoAspect}
+              options={ASPECT_OPTS} selected={aspectRatio} onChange={setAspect} cols={4} />
+
+            <Divider />
+
+            {/* FPS — 4 cols */}
+            <IconButtonGroup label="Frames / Second" sectionIcon={IcoFPS}
+              options={FPS_OPTS} selected={fps} onChange={setFps} cols={4} />
+
+            {/* Duration — 5 cols */}
+            <IconButtonGroup label="Duration" sectionIcon={IcoClock}
+              options={DURATION_OPTS} selected={duration} onChange={setDuration} cols={5} />
+
+            <Divider />
+
+            {/* Active config chips */}
+            <div className="space-y-1.5">
+              <span className="text-[9px] text-[var(--text-muted)] uppercase tracking-[0.14em] font-bold">Active Config</span>
+              <div className="flex flex-wrap gap-1">
+                {[resolution, aspectRatio.match(/\(([^)]+)\)/)?.[1] ?? aspectRatio, fps, duration.replace(' seconds','s')].map(v => (
+                  <span key={v} className="text-[9px] px-2 py-0.5 rounded-full bg-[var(--bg-dark)] border border-[var(--border)] text-[var(--text-muted)]">{v}</span>
+                ))}
+              </div>
             </div>
-          ) : (
-            <>
-              {/* General Settings */}
-              <section className="p-4 border-b border-[var(--border)]">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold flex items-center gap-2">
-                    <Icons.ChevronDown />
-                    General settings
-                  </h3>
-                </div>
 
-                <div className="space-y-4">
-                  <Dropdown
-                    label="Model"
-                    options={['Firefly Video', 'Firefly Image 3', 'Firefly Image 2']}
-                    selected={model}
-                    onChange={(val) => toggleSelection(model, setModel, val, false)}
-                    isMulti={false}
-                  />
-                  <Dropdown
-                    label="Resolution"
-                    options={['540p', '720p', '1080p', '4K']}
-                    selected={resolutions}
-                    onChange={(val) => toggleSelection(resolutions, setResolutions, val, true)}
-                  />
-                  <Dropdown
-                    label="Aspect ratio"
-                    options={['Widescreen (16:9)', 'Vertical (9:16)', 'Square (1:1)']}
-                    selected={aspectRatios}
-                    onChange={(val) => toggleSelection(aspectRatios, setAspectRatios, val, true)}
-                  />
-                  <Dropdown
-                    label="Frames per second"
-                    options={['24 FPS', '30 FPS', '60 FPS']}
-                    selected={fps}
-                    onChange={(val) => toggleSelection(fps, setFps, val, true)}
-                  />
-                  <Dropdown
-                    label="Duration"
-                    options={['5 seconds', '10 seconds', '15 seconds', '20 seconds']}
-                    selected={durations}
-                    onChange={(val) => toggleSelection(durations, setDurations, val, true)}
-                  />
-                </div>
-              </section>
-
-              {/* Frames */}
-              <section className="p-4 border-b border-[var(--border)]">
-                <h3 className="text-sm font-semibold mb-1 flex items-center gap-2">
-                  <Icons.ChevronDown />
-                  Frames <Icons.Help />
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div
-                    onClick={() => simulateUpload(setFirstFrame, 'first_frame')}
-                    className={`aspect-video rounded border border-dashed flex flex-col items-center justify-center gap-2 text-xs transition-colors cursor-pointer ${firstFrame ? 'bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]' : 'bg-[var(--bg-dark)] border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-dark)]/80'}`}
-                  >
-                    <Icons.Upload />
-                    {firstFrame ? 'Frame 1' : 'First'}
-                  </div>
-                  <div
-                    onClick={() => simulateUpload(setLastFrame, 'last_frame')}
-                    className={`aspect-video rounded border border-dashed flex flex-col items-center justify-center gap-2 text-xs transition-colors cursor-pointer ${lastFrame ? 'bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]' : 'bg-[var(--bg-dark)] border-[var(--border)] text-[var(--text-muted)] hover:bg-[var(--bg-dark)]/80'}`}
-                  >
-                    <Icons.Upload />
-                    {lastFrame ? 'Frame N' : 'Last'}
-                  </div>
-                </div>
-              </section>
-
-              {/* Composition */}
-              <section className="p-4">
-                <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                  <Icons.ChevronDown />
-                  Composition
-                </h3>
-                <p className="text-[11px] text-[var(--text-muted)] mb-4">
-                  Videos must be 10 seconds long and under 10 MB. Longer videos will be trimmed to the first 5 seconds.
-                </p>
-
-                <div className="space-y-4">
-                  <div className="bg-[var(--bg-element)] p-4 rounded-lg border border-[var(--border)]">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-xs font-medium flex items-center gap-2">
-                        <Icons.Upload />
-                        Reference
-                      </span>
-                      <Icons.Upload />
-                    </div>
-                    <div
-                      onClick={() => simulateUpload(setReferenceVideo, 'ref_video')}
-                      className={`aspect-square rounded border border-dashed flex flex-col items-center justify-center gap-3 cursor-pointer transition-colors ${referenceVideo ? 'bg-[var(--accent)]/10 border-[var(--accent)] text-[var(--accent)]' : 'bg-[var(--bg-dark)] border-[var(--border)] hover:bg-[var(--bg-panel)]'}`}
-                    >
-                      <div className={`p-2 rounded-full ${referenceVideo ? 'bg-[var(--accent)] text-white' : 'bg-[var(--bg-panel)]'}`}>
-                        <Icons.Upload />
-                      </div>
-                      <button className={`px-4 py-1.5 rounded-full text-xs transition-colors ${referenceVideo ? 'bg-[var(--accent-hover)]' : 'bg-[var(--bg-element)] hover:bg-[var(--border)]'}`}>
-                        {referenceVideo ? 'Video uploaded' : 'Upload video'}
-                      </button>
-                      {referenceVideo && (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); setReferenceVideo(null); }}
-                          className="text-xs text-[var(--text-muted)] hover:text-white flex items-center gap-1 mt-2"
-                        >
-                          <Icons.History />
-                          Reset
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </>
-          )}
+          </div>
         </aside>
 
-        {/* Central Display */}
-        <main className="flex-1 bg-[var(--bg-dark)] flex flex-col items-center justify-start pt-30 relative overflow-hidden">
-          <div className="w-full max-w-4xl relative group">
+        {/* ─────────────── Main Content ─────────────── */}
+        <main className="flex-1 bg-[var(--bg-dark)] flex flex-col items-center justify-start pt-12 relative overflow-hidden">
+
+          {/* Video player */}
+          <div className="w-full max-w-4xl px-4 relative group">
             <div className="aspect-video rounded-3xl overflow-hidden shadow-2xl relative bg-black border border-[var(--border)]">
-              {(isGenerating || isProcessing) ? (
+              {isGenerating ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-[var(--bg-dark)] z-10">
-                  <div className="w-16 h-16 border-4 border-[var(--accent)]/30 border-t-[var(--accent)] rounded-full animate-spin"></div>
-                  <span className="text-sm font-medium animate-pulse text-white">{isGenerating ? "Generating Video Using Colab GPU..." : "Processing video with FFmpeg..."}</span>
+                  <div className="w-16 h-16 border-4 border-[var(--accent)]/20 border-t-[var(--accent)] rounded-full animate-spin" />
+                  <span className="text-sm font-medium animate-pulse">Generating via Colab GPU…</span>
+                  <span className="text-[11px] text-[var(--text-muted)]">{currentModelLabel} · {resolution} · {fps} · {duration}</span>
                 </div>
               ) : aiVideoSrc ? (
-                <video
-                  src={aiVideoSrc}
-                  className="w-full h-full object-contain"
-                  autoPlay
-                  loop
-                  controls
-                />
+                <video src={aiVideoSrc} className="w-full h-full object-contain" autoPlay loop controls />
               ) : (
                 <>
-                  <img
-                    src="https://images.unsplash.com/photo-1514565131-fce0801e5785?q=80&w=2070&auto=format&fit=crop"
-                    alt="Cityscape"
-                    className="w-full h-full object-cover opacity-60"
-                  />
-                  {/* Play Button Overlay */}
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20 transition-colors">
-                    <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center cursor-pointer hover:scale-110 transition-transform">
-                      <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1"></div>
+                  <img src="https://images.unsplash.com/photo-1514565131-fce0801e5785?q=80&w=2070&auto=format&fit=crop" alt="" className="w-full h-full object-cover opacity-60" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+                      <div className="w-0 h-0 border-t-[10px] border-t-transparent border-l-[18px] border-l-white border-b-[10px] border-b-transparent ml-1" />
                     </div>
                   </div>
                 </>
@@ -349,56 +367,79 @@ export default function FireflyUI() {
             </div>
           </div>
 
-          {/* Bottom Prompt Bar */}
+          {/* ── Prompt bar ── */}
           {activeTab === 'Generate' && (
-            <div className="absolute bottom-6 left-6 right-6 flex flex-col gap-4">
+            <div className="absolute bottom-6 left-6 right-6">
               <div className="bg-[var(--bg-panel)] rounded-2xl border border-[var(--border)] p-4 shadow-xl">
                 <div className="flex gap-4 items-end">
                   <div className="flex-1 flex flex-col gap-3">
-                    <div className="flex gap-2">
-                      <div className="text-[10px] bg-[var(--bg-element)] px-2 py-0.5 rounded text-[var(--text-muted)] cursor-pointer">View All</div>
-                      <div className="w-12 h-8 rounded bg-[var(--bg-dark)] overflow-hidden border border-[var(--accent)] cursor-pointer">
-                        <img src="https://images.unsplash.com/photo-1514565131-fce0801e5785?q=80&w=150&auto=format&fit=crop" className="w-full h-full mb-4 object-cover opacity-50" />
+
+                    {/* History strip */}
+                    <div className="flex gap-2 items-center">
+                      <button onClick={() => setShowViewAll(true)}
+                        className="text-[10px] bg-[var(--bg-element)] hover:bg-[var(--bg-dark)] px-2.5 py-1 rounded text-[var(--text-muted)] hover:text-white transition-colors border border-[var(--border)] flex items-center gap-1 whitespace-nowrap">
+                        View All
+                        {history.length > 0 && (
+                          <span className="bg-[var(--accent)] text-white text-[8px] rounded-full px-1 font-bold">{history.length}</span>
+                        )}
+                      </button>
+                      <div className="flex gap-1.5 overflow-hidden">
+                        {history.slice(0, 5).map(r => (
+                          <div key={r.id} title={r.prompt} onClick={() => setAiVideoSrc(r.url)}
+                            className="w-12 h-8 rounded bg-[var(--bg-dark)] overflow-hidden border border-[var(--border)] hover:border-[var(--accent)] cursor-pointer transition-all flex-shrink-0 group">
+                            <video src={r.url} className="w-full h-full object-cover opacity-70 group-hover:opacity-100 transition-opacity" muted
+                              onMouseEnter={e => (e.currentTarget as HTMLVideoElement).play()}
+                              onMouseLeave={e => { const v = e.currentTarget as HTMLVideoElement; v.pause(); v.currentTime = 0; }} />
+                          </div>
+                        ))}
+                        {history.length === 0 && (
+                          <div className="w-12 h-8 rounded bg-[var(--bg-dark)] border border-[var(--border)] opacity-30 flex-shrink-0">
+                            <img src="https://images.unsplash.com/photo-1514565131-fce0801e5785?q=80&w=150&auto=format&fit=crop" className="w-full h-full object-cover" alt="" />
+                          </div>
+                        )}
                       </div>
                     </div>
+
+                    {/* Prompt textarea */}
                     <div className="flex flex-col">
-                      <span className="text-[10px] text-[var(--text-muted)] font-medium uppercase">Prompt</span>
+                      <span className="text-[10px] text-[var(--text-muted)] font-medium uppercase tracking-wider">Prompt</span>
                       <textarea
-                        className="bg-transparent border-none focus:outline-none focus:ring-0 text-sm resize-none h-12 w-full mt-1 text-white"
+                        className="bg-transparent border-none focus:outline-none focus:ring-0 text-sm resize-none h-12 w-full mt-1 text-white placeholder:text-[var(--text-muted)]"
                         value={promptText}
-                        onChange={(e) => setPromptText(e.target.value)}
+                        onChange={e => setPrompt(e.target.value)}
+                        placeholder="Describe your video…"
                         disabled={isGenerating}
+                        onKeyDown={e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate(); }}
                       />
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={handleGenerate}
-                      disabled={isGenerating}
-                      className={`text-white px-6 py-3 rounded-full font-semibold flex items-center gap-2 shadow-lg transition-all ${isGenerating
-                        ? 'bg-[var(--accent)]/50 cursor-not-allowed shadow-none'
-                        : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)] shadow-[var(--accent)]/20 active:scale-95'
-                        }`}
-                    >
-                      {isGenerating ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                          Generating...
-                        </>
-                      ) : (
-                        <>
-                          <Icons.Upload />
-                          Generate
-                        </>
-                      )}
-                    </button>
-                  </div>
+
+                  {/* Generate button */}
+                  <button onClick={handleGenerate} disabled={isGenerating || !promptText.trim()}
+                    className={`text-white px-6 py-3 rounded-full font-semibold flex items-center gap-2 shadow-lg transition-all
+                      ${isGenerating || !promptText.trim()
+                        ? 'bg-[var(--accent)]/40 cursor-not-allowed'
+                        : 'bg-[var(--accent)] hover:bg-[var(--accent-hover)] active:scale-95'}`}>
+                    {isGenerating
+                      ? <><Ico.Spinner /> Generating…</>
+                      : <><Ico.Wand /> Generate</>}
+                  </button>
                 </div>
+
+                <p className="text-[10px] text-[var(--text-muted)] mt-2 text-right opacity-50">
+                  ⌘↵ to generate · {currentModelLabel} · {resolution} · {fps} · {duration}
+                </p>
               </div>
             </div>
           )}
         </main>
       </div>
+
+      {/* View All modal */}
+      {showViewAll && <ViewAllModal history={history} onClose={() => setShowViewAll(false)} onSelect={r => setAiVideoSrc(r.url)} />}
+
+      {/* Inline keyframe for spinner */}
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
