@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState } from "react";
-import { useStore } from "../store/useStore";
+import { useStore } from "../../store/useStore";
 import { Play, Pause, SkipBack, SkipForward, SplitSquareHorizontal, Copy, Trash2, ZoomIn, ZoomOut, Eye, EyeOff, Lock, Unlock, Layers, Volume2, VolumeX } from "lucide-react";
 
 export default function Timeline({

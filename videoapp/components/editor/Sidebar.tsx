@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { Video, Type, Shapes, Layers, Wand2, Library as LibraryIcon, Music } from "lucide-react";
-import { useStore } from "../store/useStore";
+import { useStore } from "../../store/useStore";
 
 export default function Sidebar() {
   const [activeTab, setActiveTab] = useState("media");

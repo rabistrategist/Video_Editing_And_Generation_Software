@@ -1,5 +1,5 @@
 import React from "react";
-import { useStore } from "../store/useStore";
+import { useStore } from "../../store/useStore";
 import { Settings2, RotateCcw, GaugeIcon, BlendIcon, FlipHorizontal, FlipVertical, RotateCw, Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignStartVertical, AlignCenterVertical, AlignEndVertical } from "lucide-react";
 
 const aspectRatios = [

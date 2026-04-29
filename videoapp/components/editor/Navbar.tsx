@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Download, MonitorPlay, Undo, Redo, FilmIcon } from "lucide-react";
-import { useStore } from "../store/useStore";
-
+import { useStore } from "../../store/useStore";
+import Link from "next/link";
+import UserNav from "@/components/auth/UserNav";
 
 interface NavbarProps {
   onExport?: () => void;
@@ -66,8 +67,10 @@ export default function Navbar({
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontWeight: 600, fontSize: '18px' }}>
-          <FilmIcon size={20} color="var(--accent)" />
+         <Link href="/" className="hover:underline cursor-pointer flex items-center gap-2">
+          <FilmIcon size={22} color="var(--accent)" />
           SH Lumen
+         </Link>
         </div>
         
         {showProjectTitle && (
@@ -198,6 +201,7 @@ export default function Navbar({
           <Download size={16} />
           {primaryActionText}
         </button>
+        <UserNav />
       </div>
     </div>
   );

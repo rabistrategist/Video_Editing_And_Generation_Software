@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useMemo } from "react";
 import { Stage, Layer as KonvaLayer, Transformer, Rect, Circle, Text as KonvaText, Image as KonvaImage, Star, RegularPolygon } from "react-konva";
 import useImage from "use-image";
-import { useStore, LayerType, Layer } from "../store/useStore";
+import { useStore, LayerType, Layer } from "../../store/useStore";
 import Konva from "konva";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 

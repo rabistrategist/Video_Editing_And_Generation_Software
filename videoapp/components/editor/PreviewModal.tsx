@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { X, Play, Pause } from "lucide-react";
-import { useStore } from "../store/useStore";
+import { useStore } from "../../store/useStore";
 import dynamic from "next/dynamic";
 
 const MainCanvas = dynamic(() => import("./MainCanvas"), { ssr: false });

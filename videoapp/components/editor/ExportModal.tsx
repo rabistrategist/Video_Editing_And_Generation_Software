@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Download, X, AlertCircle } from "lucide-react";
-import { useStore } from "../store/useStore";
+import { useStore } from "../../store/useStore";
 
 export default function ExportModal({ onClose }: { onClose: () => void }) {
   const { layers, tracks, canvas, duration } = useStore();

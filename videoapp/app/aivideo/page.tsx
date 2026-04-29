@@ -1,8 +1,7 @@
 "use client";
 import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles, Clapperboard } from 'lucide-react';
-import Navbar from '@/components/Navbar';
+import Navbar from '@/components/editor/Navbar';
 import { useStore } from '@/store/useStore';
 import { generateVideo, type VideoSettings } from './actions';
 
@@ -210,7 +209,7 @@ export default function FireflyUI() {
 
   const [history, setHistory]         = useState<GenerationRecord[]>([]);
   const [showViewAll, setShowViewAll] = useState(false);
-  const [activeTab, setActiveTab]     = useState('Generate');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // ── Option data ──
   const MODEL_OPTIONS = [
@@ -260,6 +259,9 @@ export default function FireflyUI() {
           id: `gen-${Date.now()}`, prompt: promptText, url: result.url!,
           timestamp: Date.now(), settings: { model, resolution, aspectRatio, fps, duration },
         }, ...prev]);
+        setTimeout(() => {
+          setShowSuccessModal(true);
+        }, 5000);
       } else {
         alert(result.error || 'Generation failed. Make sure ngrok is running.');
       }
@@ -282,18 +284,7 @@ export default function FireflyUI() {
           if (aiVideoSrc) { const a = document.createElement('a'); a.href = aiVideoSrc; a.download = 'generated_video.mp4'; a.click(); }
           else alert('No video to download yet!');
         }}
-      >
-        <nav className="flex items-center gap-8 h-full">
-          {[{ id: 'Generate', label: 'Generate', Icon: Sparkles }, { id: 'Editor', label: 'Editor', Icon: Clapperboard }].map(({ id, label, Icon }) => (
-            <div key={id}
-              onClick={() => id === 'Editor' ? router.push(aiVideoSrc ? `/?videoUrl=${encodeURIComponent(aiVideoSrc)}` : '/') : setActiveTab(id)}
-              className={`h-full flex items-center gap-2 px-1 border-b-2 cursor-pointer transition-colors
-                ${activeTab === id ? 'border-[var(--accent)] text-white' : 'border-transparent text-[var(--text-muted)] hover:text-white'}`}>
-              <Icon size={16} />{label}
-            </div>
-          ))}
-        </nav>
-      </Navbar>
+      />
 
       {/* ── Body ── */}
       <div className="flex flex-1 overflow-hidden">
@@ -368,21 +359,20 @@ export default function FireflyUI() {
           </div>
 
           {/* ── Prompt bar ── */}
-          {activeTab === 'Generate' && (
-            <div className="absolute bottom-6 left-6 right-6">
+          <div className="absolute bottom-6 left-6 right-6">
               <div className="bg-[var(--bg-panel)] rounded-2xl border border-[var(--border)] p-4 shadow-xl">
                 <div className="flex gap-4 items-end">
                   <div className="flex-1 flex flex-col gap-3">
 
                     {/* History strip */}
                     <div className="flex gap-2 items-center">
-                      <button onClick={() => setShowViewAll(true)}
+                      {/* <button onClick={() => setShowViewAll(true)}
                         className="text-[10px] bg-[var(--bg-element)] hover:bg-[var(--bg-dark)] px-2.5 py-1 rounded text-[var(--text-muted)] hover:text-white transition-colors border border-[var(--border)] flex items-center gap-1 whitespace-nowrap">
                         View All
                         {history.length > 0 && (
                           <span className="bg-[var(--accent)] text-white text-[8px] rounded-full px-1 font-bold">{history.length}</span>
                         )}
-                      </button>
+                      </button> */}
                       <div className="flex gap-1.5 overflow-hidden">
                         {history.slice(0, 5).map(r => (
                           <div key={r.id} title={r.prompt} onClick={() => setAiVideoSrc(r.url)}
@@ -429,17 +419,73 @@ export default function FireflyUI() {
                 <p className="text-[10px] text-[var(--text-muted)] mt-2 text-right opacity-50">
                   ⌘↵ to generate · {currentModelLabel} · {resolution} · {fps} · {duration}
                 </p>
-              </div>
             </div>
-          )}
+          </div>
         </main>
       </div>
 
       {/* View All modal */}
       {showViewAll && <ViewAllModal history={history} onClose={() => setShowViewAll(false)} onSelect={r => setAiVideoSrc(r.url)} />}
 
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <SuccessModal 
+          onClose={() => setShowSuccessModal(false)} 
+          onTryEditor={() => router.push(`/editor?videoUrl=${encodeURIComponent(aiVideoSrc || '')}`)} 
+        />
+      )}
+
       {/* Inline keyframe for spinner */}
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+}
+
+// ─── Success Modal ───────────────────────────────────────────────────────────
+function SuccessModal({ onClose, onTryEditor }: { onClose: () => void; onTryEditor: () => void }) {
+  return (
+    <div className="fixed bottom-7 right-7 z-[110] slide-in-right">
+      <div className="bg-[var(--bg-panel)] border border-[var(--border)] rounded-2xl shadow-2xl w-[320px] overflow-hidden relative group">
+        {/* Subtle Glow */}
+        <div className="absolute -top-12 -left-12 w-24 h-24 bg-[var(--accent)]/10 blur-[40px] rounded-full" />
+        
+        <div className="p-5 relative z-10">
+          <div className="flex items-start gap-4 mb-4">
+            <div className="w-10 h-10 bg-[var(--accent)]/10 rounded-xl flex items-center justify-center flex-shrink-0 border border-[var(--accent)]/20">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[var(--accent)]">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <div className="flex-1 pt-1">
+              <h2 className="text-base font-bold gradient-text">Video Ready!</h2>
+              <p className="text-[var(--text-muted)] text-[11px] leading-snug mt-1">
+                Take it to the next level with professional editing tools.
+              </p>
+            </div>
+            <button onClick={onClose} className="text-[var(--text-muted)] hover:text-white transition-colors">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          
+          <div className="flex gap-2">
+            <button 
+              onClick={onTryEditor}
+              className="flex-1 bg-[var(--accent)] hover:bg-[var(--accent-hover)] text-white text-[11px] font-bold py-2.5 rounded-xl transition-all shadow-lg flex items-center justify-center gap-1.5 group/btn"
+            >
+              <span>Try Editor App</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="transition-transform group-hover/btn:translate-x-0.5">
+                <path d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+            </button>
+            <button 
+              onClick={onClose}
+              className="px-4 bg-white/5 hover:bg-white/10 text-[var(--text-muted)] hover:text-white text-[11px] font-semibold py-2.5 rounded-xl transition-all border border-white/5"
+            >
+              Later
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
